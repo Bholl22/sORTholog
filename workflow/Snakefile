@@ -80,6 +80,7 @@ include: "rules/format_tables.smk"
 include: "rules/ncbi_blast.smk"
 include: "rules/plots.smk"
 include: "rules/silix.smk"
+include: "rules/diamond.smk"
 include: "rules/make_fasta.smk"
 include: "rules/analysis_threshold.smk"
 include: "rules/hmmer.smk"
@@ -91,10 +92,7 @@ include: "rules/hmmer.smk"
 
 rule all:
     input:
-        plots=get_final_output(),
-    log:
-        os.path.join(OUTPUT_FOLDER, "logs", "all.log"),
-
+        get_final_output(),
 
 ##########################################################################
 ##########################################################################

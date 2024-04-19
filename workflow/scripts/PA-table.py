@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import sys, os
 
 ##########################################################################
@@ -32,6 +33,61 @@ def proteins2csv(sub_df):
 
 ##########################################################################
 
+
+def find_neighbors(df_patab, protein_tab, nb_check):
+    '''
+    investigate if two matches in a single genomes are encoded close to each other
+    :param patab: dataframe of presence abscence table
+    :param protein_tab: protein list of all genomes, ordered by sequences in the genomes
+    :param nb_check: number of neighbors to investigates
+    :return: dataframe of presence abscence table updated for neighbors
+    '''
+
+    for assembly_id in df_patab.assembly_id.unique():
+        patab_filtered = df_patab[df_patab['assembly_id'] == assembly_id]
+        protein_tab_filtered = protein_tab[protein_tab['genome_id'] == assembly_id].reset_index()
+        protein_tab_filtered['protein_id'] = protein_tab_filtered.protein_id.apply(lambda x: x.split('--')[0])
+        all_prot = [*set(patab_filtered.protein_id.to_list())]
+        if np.nan in all_prot:
+            all_prot.remove(np.nan)
+        elif "" in all_prot:
+            all_prot.remove("")
+
+        for protein in all_prot:
+            index_patab = patab_filtered[patab_filtered["protein_id"] == protein].index[0]
+            index_prot_tab = protein_tab_filtered[protein_tab_filtered["protein_id"] == protein].index[0]
+            tot_number = protein_tab_filtered.shape[0] - 1
+
+            if index_prot_tab <= nb_check:
+                index2gather = [*range(0, index_prot_tab + nb_check + 1, 1)]
+                index2gather.extend(range(tot_number - 10 + index_prot_tab, tot_number + 1, 1))
+
+            elif index_prot_tab >= tot_number - nb_check:
+                index2gather = [*range(index_prot_tab - nb_check, tot_number + 1, 1)]
+                index2gather.extend(range(0, tot_number - index_prot_tab + 1, 1))
+
+            else:
+                index2gather = [*range(index_prot_tab - nb_check, index_prot_tab + nb_check + 1, 1)]
+
+            index2gather.remove(index_prot_tab)
+            neighbor_list = []
+
+            for index in index2gather:
+                neighbor_list.append(protein_tab_filtered.at[index, 'protein_id'])
+
+            for other_prot in all_prot:
+
+                if other_prot == protein:
+                    next
+
+                elif other_prot in neighbor_list:
+                    df_patab.at[index_patab, 'neighbors'] = True
+
+    return df_patab
+
+
+##########################################################################
+
 # Put error and out into the log file
 sys.stderr = sys.stdout = open(snakemake.log[0], "w")
 
@@ -48,8 +104,8 @@ all_proteins.fillna("", inplace=True)
 # fnodes opening
 fam_id_table = pd.DataFrame()
 
-for fnodes_file in snakemake.input.fnodes:
-    tmp_df = pd.read_table(fnodes_file)
+for diamond_file in snakemake.input.diamonds:
+    tmp_df = pd.read_table(diamond_file, sep='\t')
     fam_id_table = pd.concat([fam_id_table, tmp_df])
 
 # add the protein information from the protein table and genome table
@@ -75,6 +131,7 @@ patab = patab.merge(
 patab_tmp = patab.copy()
 
 # Find max value to change
+print(patab_tmp[seed_list])
 max_value = patab_tmp[seed_list].values.max()
 
 # Change value > 2 by 1
@@ -115,12 +172,18 @@ patab = patab.merge(
 # Change genome_id to assembly_id
 patab = patab.rename(columns={"genome_id": "assembly_id"})
 
-print(patab)
+# neighbor analysis
+patab['neighbors'] = False
+if snakemake.params.neighbor_analysis:
+    patab = find_neighbors(df_patab=patab,
+                           protein_tab=all_proteins,
+                           nb_check=snakemake.params.neighbor_number,
+                           )
 
 # save the table
 patab.to_csv(snakemake.output.final_table, sep="\t", index=False)
 
-# Because seems to be needed same table but in pivot format with the name of the protein in cells
+# pivot format with the name of the protein in cells
 patab_table = patab.pivot_table(
     index="assembly_id",
     columns="seed",

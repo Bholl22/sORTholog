@@ -53,6 +53,28 @@ def adjust_lightness(color, amount=0.5):
 
 ##########################################################################
 
+
+def invert_color(hex_color):
+    """
+    Invert the color represented by the given hexadecimal color code.
+
+    :param hex_color: Hexadecimal color code (e.g. "#FFFFFF" for white).
+    :return: Inverted color represented as a hexadecimal color code.
+    """
+    # Convert the hex color code to RGB
+    r, g, b = int(hex_color[1:3], 16), int(hex_color[3:5], 16), int(hex_color[5:7], 16)
+
+    # Invert the color by subtracting the RGB values from 255
+    inverted_r, inverted_g, inverted_b = 255 - r, 255 - g, 255 - b
+
+    # Convert the inverted RGB values to hex
+    inverted_hex_color = "#{:02x}{:02x}{:02x}".format(inverted_r, inverted_g, inverted_b)
+
+    return inverted_hex_color
+
+
+##########################################################################
+
 # Put error and out into the log file
 sys.stderr = sys.stdout = open(snakemake.log[0], "w")
 
@@ -71,6 +93,7 @@ patab_dtypes = {
     "PA": np.int8,
     "color": "string",
     "genome_name": "string",
+    "neighbors": "bool",
 }
 
 patab = pd.read_table(snakemake.input.final_table, dtype=patab_dtypes)
@@ -124,15 +147,21 @@ fig.subplots_adjust(
 )
 
 label_format = {"fontweight": "bold"}
+neighbor_line = snakemake.config["neighborhoods"]["line"]
 
 for _, row in patab.iterrows():
-    # Change the border's shade to a darker color infer from the background color
+    edge_color = "#131516"
+    line_shape = '-'
+
+    if row.neighbors:
+        line_shape = neighbor_line
+
     if snakemake.config["default_values_plot"]["colored_border"]:
+        # Change the border's shade to a darker color infer from the background color
         edge_color = (
             "#2F3D44" if row.color == "#FFFFFF" else adjust_lightness(row.color)
         )
-    else:
-        edge_color = "#131516"
+
 
     # Change the border's shape to a round version
     if snakemake.config["default_values_plot"]["round_border"]:
@@ -152,6 +181,7 @@ for _, row in patab.iterrows():
             width=size_rec,
             height=size_rec,
             edgecolor=edge_color,
+            linestyle=line_shape,
             lw=1,
         )
     )

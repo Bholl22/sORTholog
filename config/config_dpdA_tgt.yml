@@ -1,0 +1,145 @@
+####################
+# General settings #
+####################
+ 
+
+# path to seeds sheet (TSV format, columns: seed, protein_id, ...)
+seed: config/seeds_deaza.tsv
+
+# path to taxonomic id to search seeds in (TSV format, columns: TaxId, NCBIGroups)
+taxid: config/taxids_dpdAtgt.tsv
+
+# name of the project 
+project_name: deaza_dpdA_tgt
+
+# path to the result folder can be let empty with "" if you want where you are
+output_folder: ""
+
+
+#################################
+# Options to download proteomes #
+#################################
+
+
+ndg_options:
+    # Values for section : {'refseq','genbank'}
+    section: genbank
+    # Values for assembly_levels : ['all', 'complete', 'chromosome', 'scaffold', 'contig']
+    assembly_levels: all
+    # Values for refseq_categories : {'reference', 'all'}
+    refseq_categories: all
+    # Values for groups : ['all', 'archaea', 'bacteria', 'fungi', 'invertebrate', 'metagenomes', 'plant', 'protozoa', 'vertebrate_mammalian', 'vertebrate_other', 'viral']
+    # Will be used if none is give in base_set_taxid.tsv
+    groups: all
+
+# Option for the Taxonomy DB parser
+# If you want to update the Taxonomy dump, :warning: it increase the running time of the workflow
+update_db: False
+
+
+#########################################
+# Options to add your personal proteome #
+#########################################
+
+
+# Path to personal database, it consists of a fasta file with all the proteins you want to add to the search: 
+perso_database: ''
+
+# Path to personal database annoation tsv file if your fasta headers are not in the format: "sequence_name--genome_id description" (TSV format, columns: protein_id, genome_id[, genome_name])
+perso_annotation: ''
+
+
+###################
+# Speedup Options #
+###################
+
+
+# Speedup the blast all vs all by adding a psiblast step to reduce dataset
+speedup: True
+
+# e value threshold to use for psiblast
+default_psiblast_options:
+    # E-value threshold
+    psiblast_e_val: 0.01
+    # Iteration 
+    iteration: 5
+
+# path for the hmm profiles folder, if none just put empty string: ''
+hmm_profiles: ''
+
+# Default values for HMM if not given in seeds file
+default_hmmsearch_options:
+    # E-value threshold
+    e_val: 0.01
+    # Values for focus : {domain, full}
+    focus: full
+
+
+####################
+# Analysis Options #
+####################
+
+
+# Blast option if not given in seeds.tsv
+default_blast_options:
+    # E-value threshold
+    e_val: 0.0001
+    # Percentage of identity threshold
+    pid: 0.35
+    # Coverage of the query treshold
+    cov: 0.8
+
+# Silix option for the calculation of the percentage of identity and coverage
+silix_options:
+    # Minimum coverage option: ['mean':mean of the 2 lengths (default), 'subject':subject length, 'query':query length, 'shortest':shortest length, 'longest'=longest length]
+    cov_min: mean
+    # Minimum percentage of identity: ['mean':mean of the 2 lengths (default), 'subject':subject length, 'query':query length, 'shortest':shortest length, 'longest'=longest length, 'HSP'=HSP length]
+    pid_min: mean
+    # Min length to accept partial sequences in families
+    length_min: 100
+
+
+#################
+# Plot Settings #
+#################
+
+
+# Default value for plot
+default_values_plot:
+    # Color
+    color: '#131516' # This color is a dark grey similar to black
+    # Turn color of the border a darker shade infer from the background if True else set the color to black
+    colored_border: False
+    # Turn border to roundish shape
+    round_border: False
+
+# Neighborhood Clustering analysis of ortholog matches
+neighborhoods:
+    # On or off
+    analysis: True
+    # Number of gene neighbors to look into
+    numbers: 10
+    # change box line, '-' normal, '-.' dash-doted line, '--' dashed line, ':' doted line
+    line: -.
+
+# If you only want the plot need a table (TSV format, columns: gene1, gene2..., index: genome_ids)
+PAtab_table: ''
+
+
+###############################
+# Threshold analysis settings #
+###############################
+
+# if you want to remove the options to have the  full data put 0 everywhere or remove the lines below
+default_threshold:
+    # minimum amount of point to trigger the data reduction
+    min_lines: 0
+    # Statistical accuracy of the Kl-divergence test, decimals to use when rounding the number
+    round_value: 0
+
+# Automatic detection of the thresholds
+threshold_detection:
+    # On (True) or Off (False)
+    active: True
+    # Number of dimention for detection (1, 2 or 3)
+    dimentions: 1

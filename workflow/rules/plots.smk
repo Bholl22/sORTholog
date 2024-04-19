@@ -18,6 +18,8 @@ rule plots:
             caption="../report/PA_plot.rst",
             category="Plots",
         ),
+    resources:
+        mem_mb=10000,
     log:
         os.path.join(OUTPUT_FOLDER, "logs", "plots", "plots.log"),
     conda:

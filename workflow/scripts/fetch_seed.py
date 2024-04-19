@@ -1,6 +1,7 @@
 from Bio import Entrez
 from Bio import SeqIO
 import sys
+import os
 import pandas as pd
 
 Entrez.tool = "sortholog"

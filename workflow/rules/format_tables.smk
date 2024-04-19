@@ -137,21 +137,19 @@ rule prepare_for_silix:
 
 rule find_family:
     input:
-        fnodes=os.path.join(
+        diamond=os.path.join(
             OUTPUT_FOLDER,
             "processing_files",
-            "silix",
-            "fnodes_files",
-            "filtered_blast--{seed}_evalue_{eval}_cov_{coverage}_pid_{pid}.fnodes",
+            "diamond",
+            "all_protein_with_seeds_{seed}_evalue_{eval}_cov_{coverage}_pid_{pid}.cluster",
         ),
         seed_file=os.path.join(OUTPUT_FOLDER, "databases", "seeds", "new_seeds.tsv"),
     output:
         os.path.join(
             OUTPUT_FOLDER,
             "processing_files",
-            "silix",
-            "modif",
-            "filtered_blast--{seed}_evalue_{eval}_cov_{coverage}_pid_{pid}.fnodes.flushed",
+            "diamond",
+            "all_protein_with_seeds_{seed}_evalue_{eval}_cov_{coverage}_pid_{pid}.cluster.flushed",
         ),
     log:
         os.path.join(
@@ -174,13 +172,12 @@ rule make_PA_table:
     input:
         seed_file=os.path.join(OUTPUT_FOLDER, "databases", "seeds", "new_seeds.tsv"),
         protein_table=proteinTable,
-        fnodes=expand(
+        diamonds=expand(
             os.path.join(
                 OUTPUT_FOLDER,
                 "processing_files",
-                "silix",
-                "modif",
-                "filtered_blast--{gene_constrains}.fnodes.flushed",
+                "diamond",
+                "all_protein_with_seeds_{gene_constrains}.cluster.flushed",
             ),
             gene_constrains=gene_constrains,
         ),
@@ -195,6 +192,9 @@ rule make_PA_table:
             caption="../report/PA_table.rst",
             category="Tables",
         ),
+    params:
+        neighbor_analysis=config['neighborhoods']['analysis'],
+        neighbor_number=config['neighborhoods']['numbers'],
     log:
         os.path.join(OUTPUT_FOLDER, "logs", "format_table", "make_table.log"),
     conda:

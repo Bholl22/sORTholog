@@ -17,12 +17,12 @@ properties:
     type: number
     description: percentage of identity for the blast threshold for the protein [between 0-1]
     minimum: 0
-    maximum: 1
+    maximum: 100
   coverage:
     type: number
     description: coverage of the seed on the alignment for the blast threshold for the protein [between 0-1]
     minimum: 0
-    maximum: 1
+    maximum: 100
   color:
     type: string
     description: color wanted for the gene in the plot at the end

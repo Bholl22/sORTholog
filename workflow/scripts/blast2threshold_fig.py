@@ -5,9 +5,9 @@ import pandas as pd
 import numpy as np
 import sys, os
 from typing import List
+from sklearn.cluster import KMeans
 
 sys.stderr = sys.stdout = open(snakemake.log[0], "w")
-
 
 ##########################################################################
 
@@ -16,11 +16,11 @@ def kl_divergence(p: float, q: float) -> float:
     """Compute the KL divergence between two points.
 
     Args:
-        p (float): [description]
-        q (float): [description]
+        p (float): first value to compare
+        q (float): second value to compare
 
     Returns:
-        float: [description]
+        float: KL(p||q) score
     """
 
     # Get the Kullback–Leibler (KL) divergence KL(p||q)
@@ -154,6 +154,77 @@ def dataframe_reduction(
 
     return df2return
 
+
+##########################################################################
+
+
+def cluster_def(data_df: pd.DataFrame, num_variables: int) -> pd.DataFrame:
+    ''' This function takes as input a dataframe with three columns. Sample_size tells us how many data points
+    do we want to consider for our analysis. The first column represents percentage identity, the second column represents
+    coverage and the third column represents e-value.
+    The output is a dataframe with four columns:
+    [p_identity,coverage,evalue,labels]. Here the labels are extracted using the variables [p_identity, p_identity*coverage].
+    If the num_variables is 1, then the clustering output i.e. labels will be determined using just one coordinate [p_identity*coverage].
+    num_varaibles=3 means we consider all the three variables to cluster data'''
+
+    data_df['labels'] = 1
+
+    if data_df.shape[0] > 2:
+        data_array = data_df[['pident', 'coverage', 'evalue']].to_numpy()
+
+        # Removing zero evalue terms in case of num_variables=3.
+        # This is to avoid the cases of taking log(0) as we will be taking log of e-value to cluster.
+
+        if num_variables == 3:
+            data_array = data_array[data_array[:, -1] != 0]
+            data_array[:, -1] = np.log10(data_array[:, -1])
+
+        # creating separate array for the transformed data (transformation: coverage -> coverage*p_identity.
+        # This transformation linearizes the data for better clustering).
+        # We can make changes to the original array instead of creaeting the 'transformed array' to save space.
+
+        transformed_data = np.copy(data_array)
+        transformed_data[:, 1], transformed_data[:, 0] = transformed_data[:, 0], data_array[:, 0] * data_array[:, 1]
+
+
+        # Clustering using k_means
+        clustering = KMeans(n_clusters=2).fit(transformed_data[:, :num_variables])
+        labels = clustering.labels_
+
+        # getting the index of point with lowest coverage and making sure that it is labelled as 0.
+        # This helps in making sure that in familiy cluster is called 1 while out of family cluster is called 0.
+        min_coverage_index = np.argmin(data_array, axis=0)[0]
+
+        # The code below flips labels if the label at min_coverage_index is 1.
+        # Otherwise, it does not make any change to labels.
+        labels = (labels + labels[min_coverage_index]) % 2
+
+        # creating aggregated dataframe with coverage, percentage identity, e value and labels.
+        # Makes plotting 3D data points based on their labels super easy using the px.scatter_3d package.
+        data_df['labels'] = list(labels)
+
+    return data_df
+
+
+##########################################################################
+
+
+def detect_threshold(seed_table: pd.DataFrame, group_table: List[pd.DataFrame]) -> pd.DataFrame:
+    '''
+
+    :param seed_table:
+    :param group_table:
+    :return:
+    '''
+
+    seed_table.set_index('seed', inplace=True)
+    for group_df in group_table:
+        df_cluter = group_df[group_df['labels'] == 1]
+        seed_table.at[group_df.at[0, 'seed'], 'opt_pident'] = df_cluter.pident.min()
+        seed_table.at[group_df.at[0, 'seed'], 'opt_cov'] = df_cluter.coverage.min()
+        seed_table.at[group_df.at[0, 'seed'], 'opt_eval'] = df_cluter.evalue.max()
+
+    return seed_table.reset_index()
 
 ##########################################################################
 
@@ -746,13 +817,19 @@ pio.templates.default = "plotly"
 
 # Get all the different dataframes
 all_fam_df = dataframe_reduction(
-    snakemake.input, snakemake.params["min_lines"], snakemake.params["round_value"]
+    snakemake.input['table_hits'], snakemake.params["min_lines"], snakemake.params["round_value"]
 )
 
-tmp_plot2D = scatter2D_plotly(all_fam_df)
+if snakemake.params['threshold_detection']:
+    # Open seeds
+    seed_file = pd.read_table(snakemake.input['seeds'])
+    clustered_df = [cluster_def(seed_df, snakemake.params['var_on']) for seed_df in all_fam_df]
+    seed_file = detect_threshold(seed_file, clustered_df)
+    seed_file.to_csv(snakemake.output['seed_detection'], sep="\t", index=False)
 
+tmp_plot2D = scatter2D_plotly(all_fam_df)
 tmp_plot3D = scatter3D_plotly(all_fam_df)
 
-fig2html(tmp_plot2D, tmp_plot3D, snakemake.output[0])
+fig2html(tmp_plot2D, tmp_plot3D, snakemake.output['figure'])
 
 ##########################################################################

@@ -1,0 +1,11 @@
+__default__:
+    account      : lagard # your hpc account
+    qos          : lagard # the qos name
+    time         : 120 # default time (minutes)
+    nodes        : 1
+    ntasks       : 1
+    cpus-per-task: 1
+    mem          : 4G # default memory
+    output       : "logs/slurm/{rule}/{rule}.{wildcards}.out"
+    error        : "logs/slurm/{rule}/{rule}.{wildcards}.err"
+    job-name     : "snakejob.{rule}.{wildcards}"

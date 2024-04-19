@@ -35,6 +35,7 @@ rule fetch_proteins_database:
     resources:
         cpus=5,
         time=3000,
+        mem_mb=20000,
     threads: 5
     conda:
         "../envs/biopython_ete3.yaml"

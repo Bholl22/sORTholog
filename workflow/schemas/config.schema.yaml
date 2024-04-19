@@ -28,7 +28,7 @@ properties:
       iteration:
         type: number
         minimum: 1
-        maximum: 5
+        maximum: 10
 
   default_hmmsearch_options:
     type: object

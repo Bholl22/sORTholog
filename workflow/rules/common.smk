@@ -10,6 +10,7 @@ import os, sys
 import pandas as pd
 import numpy as np
 from snakemake.utils import validate
+from snakemake.workflow import workflow
 
 ##########################################################################
 ##########################################################################
@@ -27,6 +28,12 @@ def get_final_output():
     final_output = multiext(
         os.path.join(OUTPUT_FOLDER, "results", "plots", "gene_PA"), ".png", ".pdf"
     )
+
+    if config['threshold_analysis']:
+        final_output.append(
+            os.path.join(OUTPUT_FOLDER, "analysis_thresholds", "report_figure_thresholds.html")
+        )
+
     return final_output
 
 
@@ -285,12 +292,22 @@ else:
 config["__workflow_basedir__"] = workflow.basedir
 config["__workflow_basedir_short__"] = os.path.basename(workflow.basedir)
 config["__workflow_workdir__"] = os.getcwd()
-
+#Original
 if workflow.config_settings.config_args:
     tmp_config_arg = '" '.join(workflow.config_settings.config_args).replace("=", '="')
     config["__config_args__"] = f' -C {tmp_config_arg}"'
 else:
     config["__config_args__"] = ""
+
+#Modified version
+
+#ChatGPT Version
+# if workflow.config_args:
+#     tmp_config_arg = '" "'.join(workflow.config_args).replace("=", '="')
+#     config["__config_args__"] = f' -C "{tmp_config_arg}"'
+# else:
+#     config["__config_args__"] = ""
+
 
 with open(os.path.join(workflow.basedir, "../config/VERSION"), "rt") as version:
     url = "https://github.com/vdclab/sORTholog/releases/tag"

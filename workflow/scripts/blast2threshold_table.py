@@ -34,7 +34,9 @@ def iterrator_on_blast_hsp(blast_out):
         for line in r_file:
             split_line = line.rstrip().split("\t")
 
-            if (split_line[0], split_line[1]) == current_pair:
+            if split_line == blast_names:
+                next
+            elif (split_line[0], split_line[1]) == current_pair:
                 list_line.append(split_line)
             elif current_pair == "":
                 current_pair = (split_line[0], split_line[1])
@@ -623,7 +625,7 @@ def summarize_hit_only(
 
 blast_out = snakemake.input.blast_out
 
-seed_family = snakemake.input.fnodes
+seed_family = snakemake.input.diamond
 
 # Seeds
 seed_table = pd.read_table(
@@ -657,16 +659,16 @@ protein_dict.update(seed_table.length.to_dict())
 
 # Opening blast_out and preparation
 blast_names = [
-    "qseqid",
-    "sseqid",
+    "cseqid",
+    "mseqid",
     "pident",
     "length",
     "mismatch",
     "gapopen",
-    "qstart",
-    "qend",
-    "sstart",
-    "send",
+    "cstart",
+    "cend",
+    "mstart",
+    "mend",
     "evalue",
     "bitscore",
 ]
@@ -674,16 +676,16 @@ blast_names = [
 
 # Get the types of te columns for multiple HSPs dataframe
 blast_dtypes = [
-    ("qseqid", "S100"),
-    ("sseqid", "S100"),
+    ("cseqid", "S100"),
+    ("mseqid", "S100"),
     ("pident", np.float64),
     ("length", np.int32),
     ("mismatch", np.int32),
     ("gapopen", np.int32),
-    ("qstart", np.int32),
-    ("qend", np.int32),
-    ("sstart", np.int32),
-    ("send", np.int32),
+    ("cstart", np.int32),
+    ("cend", np.int32),
+    ("mstart", np.int32),
+    ("mend", np.int32),
     ("evalue", np.float64),
     ("bitscore", np.float64),
 ]

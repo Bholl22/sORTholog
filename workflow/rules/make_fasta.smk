@@ -90,7 +90,7 @@ rule merge_fasta:
             "extract_protein.log",
         ),
     shell:
-        """cat '{input.taxid_fasta}' '{input.seed_fasta}' > '{output.fasta_for_blast}' 2> {log}"""
+        """cat '{input.seed_fasta}' '{input.taxid_fasta}' > '{output.fasta_for_blast}' 2> {log}"""
 
 
 ##########################################################################
